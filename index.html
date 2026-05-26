@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coffee Cost Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+  .app { background: #fff; border-radius: 16px; border: 1px solid #e0dfd7; padding: 2rem; max-width: 520px; width: 100%; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 14px; color: #888780; margin-bottom: 1.5rem; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 2rem; }
+  .card { border: 1px solid #e0dfd7; border-radius: 12px; padding: 1rem; cursor: pointer; transition: border-color 0.15s; }
+  .card.selected { border: 2px solid #378ADD; }
+  .card .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; margin-bottom: 8px; }
+  .card.paradiso .badge { background: #e6f1fb; color: #185fa5; }
+  .card.raffa .badge { background: #faeeda; color: #854f0b; }
+  .card h3 { font-size: 16px; font-weight: 500; margin-bottom: 2px; }
+  .card p { font-size: 13px; color: #888780; }
+  .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; }
+  .slider-label { font-size: 14px; color: #888780; min-width: 170px; }
+  .slider-val { font-size: 14px; font-weight: 500; min-width: 28px; text-align: right; }
+  input[type=range] { flex: 1; accent-color: #378ADD; }
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .metric { background: #f5f5f3; border-radius: 8px; padding: 1rem; text-align: center; }
+  .metric-label { font-size: 13px; color: #888780; margin-bottom: 4px; }
+  .metric-value { font-size: 26px; font-weight: 500; }
+  .metric-unit { font-size: 13px; color: #888780; }
+  .note { background: #f5f5f3; border-radius: 8px; padding: 1rem; font-size: 13px; color: #888780; }
+  .note strong { color: #1a1a18; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>☕ Coffee Cost Calculator</h1>
+  <p class="subtitle">Strumica, Macedonia</p>
+
+  <div class="cards">
+    <div class="card paradiso selected" id="card-paradiso" onclick="select('paradiso')">
+      <div class="badge">60 ден / coffee</div>
+      <h3>Paradiso</h3>
+      <p>60 Macedonian denars</p>
+    </div>
+    <div class="card raffa" id="card-raffa" onclick="select('raffa')">
+      <div class="badge">70 ден / coffee</div>
+      <h3>Raffa</h3>
+      <p>70 Macedonian denars</p>
+    </div>
+  </div>
+
+  <div class="slider-row">
+    <span class="slider-label">☕ Coffees per day</span>
+    <input type="range" min="1" max="10" step="1" value="2" id="perDay" oninput="update()">
+    <span class="slider-val" id="perDay-out">2</span>
+  </div>
+  <div class="slider-row">
+    <span class="slider-label">📅 Days per month</span>
+    <input type="range" min="1" max="31" step="1" value="20" id="days" oninput="update()">
+    <span class="slider-val" id="days-out">20</span>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Per day</div>
+      <div class="metric-value" id="m-day">120</div>
+      <div class="metric-unit">ден</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Per month</div>
+      <div class="metric-value" id="m-month">2,400</div>
+      <div class="metric-unit">ден</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Per year</div>
+      <div class="metric-value" id="m-year">28,800</div>
+      <div class="metric-unit">ден</div>
+    </div>
+  </div>
+
+  <div class="note" id="savings-note">
+    You save <strong>0 ден/month</strong> by choosing Paradiso over Raffa.
+  </div>
+</div>
+
+<script>
+  let restaurant = 'paradiso';
+  const prices = { paradiso: 60, raffa: 70 };
+
+  function select(r) {
+    restaurant = r;
+    document.getElementById('card-paradiso').className = 'card paradiso' + (r === 'paradiso' ? ' selected' : '');
+    document.getElementById('card-raffa').className = 'card raffa' + (r === 'raffa' ? ' selected' : '');
+    update();
+  }
+
+  function update() {
+    const pd = parseInt(document.getElementById('perDay').value);
+    const d = parseInt(document.getElementById('days').value);
+    document.getElementById('perDay-out').textContent = pd;
+    document.getElementById('days-out').textContent = d;
+
+    const price = prices[restaurant];
+    const perDay = pd * price;
+    const perMonth = perDay * d;
+    const perYear = Math.round(perMonth * 12);
+
+    document.getElementById('m-day').textContent = perDay.toLocaleString();
+    document.getElementById('m-month').textContent = perMonth.toLocaleString();
+    document.getElementById('m-year').textContent = perYear.toLocaleString();
+
+    const other = restaurant === 'paradiso' ? 'raffa' : 'paradiso';
+    const diff = Math.abs((prices[other] - price) * pd * d);
+    const note = document.getElementById('savings-note');
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    if (price < prices[other]) {
+      note.innerHTML = `You save <strong>${diff.toLocaleString()} ден/month</strong> by choosing ${cap(restaurant)} over ${cap(other)}.`;
+    } else if (diff === 0) {
+      note.innerHTML = `Both restaurants cost the same with your current settings.`;
+    } else {
+      note.innerHTML = `Switch to <strong>${cap(other)}</strong> and save <strong>${diff.toLocaleString()} ден/month</strong>.`;
+    }
+  }
+
+  update();
+</script>
+</body>
+</html>
